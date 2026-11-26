@@ -40,6 +40,19 @@ npm run build   # 类型检查 + 打包
 1. **局域网**：`npm run build && npx vite preview --host 0.0.0.0`，手机连同一 WiFi 访问电脑 IP，浏览器菜单「添加到主屏幕」
 2. **服务器**：静态文件 + `/api` 反代到网关，HTTPS 下 PWA 体验完整
 
+### 已部署的后端 API（Windows Server）
+
+当前后端跑在 `43.138.34.79:8791`（Windows Server 2025 + Node 26），开机自启：
+
+- 应用目录：`C:\Users\Administrator\family-lists\`（`gateway/` 代码、`data/` 数据库、`start.bat` 启动脚本）
+- 自启方式：Windows 计划任务 `FamilyListsAPI`（`ONSTART`，Administrator 身份）
+- 公网地址：`http://43.138.34.79:8791`，健康检查 `/api/health`
+- 应急命令：`schtasks /Run /TN "FamilyListsAPI"` 手动启动；`taskkill /F /IM node.exe` 停止
+
+前端切到云端只需在 `.env` 设 `VITE_API_BASE=http://43.138.34.79:8791` 后重新构建。网关默认 `CORS=*`，如需收紧改成自己的前端域名。
+
+Linux 服务器可用 `deploy/setup-server.sh`（systemd 托管），用法见脚本注释。
+
 ## 技术栈
 
 Node 22 内置 `http` + `node:sqlite`（零依赖网关）· React 19 + TypeScript + Vite · PWA。
