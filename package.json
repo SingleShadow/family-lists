@@ -10,6 +10,10 @@
     "smoke": "node gateway/smoke.cjs"
   },
   "dependencies": {
+    "acme": "^3.0.3",
+    "express": "^4.21.2",
+    "greenlock-express": "^4.0.3",
+    "http-proxy-middleware": "^3.0.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },

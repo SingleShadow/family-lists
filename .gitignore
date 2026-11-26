@@ -4,3 +4,9 @@ data/
 *.log
 .env
 .DS_Store
+caddy.zip
+caddy2.zip
+caddy-extract/
+https-proxy/greenlock.d/*.json
+!https-proxy/greenlock.d/config.json
+!https-proxy/greenlock.d/package.json

@@ -53,6 +53,21 @@ npm run build   # 类型检查 + 打包
 
 Linux 服务器可用 `deploy/setup-server.sh`（systemd 托管），用法见脚本注释。
 
+### HTTPS（进行中，待放行 80/443）
+
+用 `https-proxy/` 下的 greenlock-express 做 HTTPS 反代：自动申请并续期 Let's Encrypt 证书，80 端口跳转 HTTPS，443 反代到本机网关 8791。域名 `www.boringworld.cn`，站点配置在 `https-proxy/greenlock.d/config.json`。
+
+前置条件：
+- DNS A 记录 `www.boringworld.cn` → `43.138.34.79`（已就绪）
+- 安全组放行 `TCP 80` 和 `TCP 443`（**待操作**，证书申请必须走 80 验证）
+
+放行后在服务器执行：
+```bat
+schtasks /Create /TN "FamilyListsHTTPS" /TR "C:\Users\Administrator\family-lists\https-proxy\start.bat" /SC ONSTART /RU Administrator /F
+schtasks /Run /TN "FamilyListsHTTPS"
+```
+证书自动签发后访问 `https://www.boringworld.cn/api/health` 验证，前端 `.env` 改 `VITE_API_BASE=https://www.boringworld.cn`。
+
 ## 技术栈
 
 Node 22 内置 `http` + `node:sqlite`（零依赖网关）· React 19 + TypeScript + Vite · PWA。
