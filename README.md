@@ -40,33 +40,27 @@ npm run build   # 类型检查 + 打包
 1. **局域网**：`npm run build && npx vite preview --host 0.0.0.0`，手机连同一 WiFi 访问电脑 IP，浏览器菜单「添加到主屏幕」
 2. **服务器**：静态文件 + `/api` 反代到网关，HTTPS 下 PWA 体验完整
 
-### 已部署的后端 API（Windows Server）
+### 已部署的 HTTPS 站点（Windows Server）
 
-当前后端跑在 `43.138.34.79:8791`（Windows Server 2025 + Node 26），开机自启：
+**公网地址：https://www.boringworld.cn** —— 前端页面 + API 同源部署，PWA 可添加到桌面。
 
-- 应用目录：`C:\Users\Administrator\family-lists\`（`gateway/` 代码、`data/` 数据库、`start.bat` 启动脚本）
-- 自启方式：Windows 计划任务 `FamilyListsAPI`（`ONSTART`，Administrator 身份）
-- 公网地址：`http://43.138.34.79:8791`，健康检查 `/api/health`
-- 应急命令：`schtasks /Run /TN "FamilyListsAPI"` 手动启动；`taskkill /F /IM node.exe` 停止
+架构：
 
-前端切到云端只需在 `.env` 设 `VITE_API_BASE=http://43.138.34.79:8791` 后重新构建。网关默认 `CORS=*`，如需收紧改成自己的前端域名。
+| 组件 | 位置 | 说明 |
+|---|---|---|
+| HTTPS 服务 | `C:\Users\Administrator\family-lists\https-proxy\` | greenlock-express，80→443 跳转，Let's Encrypt 自动续期 |
+| 前端静态文件 | `https-proxy\dist\` | `npm run build` 产物，同源提供 |
+| API 网关 | `C:\Users\Administrator\family-lists\gateway\` | 8791，`/api/*` 由 HTTPS 服务反代 |
+| 数据库 | `data\family-lists.db` | 本地 SQLite |
+
+- 自启：计划任务 `FamilyListsHTTPS` + `FamilyListsAPI`（均 `ONSTART`，Administrator 身份）
+- 证书配置：`https-proxy/greenlock.d/config.json`，域名 `www.boringworld.cn`
+- 应急命令：`schtasks /Run /TN "FamilyListsHTTPS"` / `schtasks /Run /TN "FamilyListsAPI"`
+- 查看日志：`https-proxy\proxy.log`
+
+前端 `.env` 的 `VITE_API_BASE` 保持留空（同源 `/api`），仅分域部署时才填完整地址。
 
 Linux 服务器可用 `deploy/setup-server.sh`（systemd 托管），用法见脚本注释。
-
-### HTTPS（进行中，待放行 80/443）
-
-用 `https-proxy/` 下的 greenlock-express 做 HTTPS 反代：自动申请并续期 Let's Encrypt 证书，80 端口跳转 HTTPS，443 反代到本机网关 8791。域名 `www.boringworld.cn`，站点配置在 `https-proxy/greenlock.d/config.json`。
-
-前置条件：
-- DNS A 记录 `www.boringworld.cn` → `43.138.34.79`（已就绪）
-- 安全组放行 `TCP 80` 和 `TCP 443`（**待操作**，证书申请必须走 80 验证）
-
-放行后在服务器执行：
-```bat
-schtasks /Create /TN "FamilyListsHTTPS" /TR "C:\Users\Administrator\family-lists\https-proxy\start.bat" /SC ONSTART /RU Administrator /F
-schtasks /Run /TN "FamilyListsHTTPS"
-```
-证书自动签发后访问 `https://www.boringworld.cn/api/health` 验证，前端 `.env` 改 `VITE_API_BASE=https://www.boringworld.cn`。
 
 ## 技术栈
 
