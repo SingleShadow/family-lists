@@ -40,7 +40,8 @@ export interface ItemInput {
 }
 
 async function req<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`/api${path}`, {
+  const base = import.meta.env.VITE_API_BASE || '';
+  const res = await fetch(`${base}/api${path}`, {
     ...init,
     headers: init?.body ? { 'Content-Type': 'application/json' } : undefined,
   });
