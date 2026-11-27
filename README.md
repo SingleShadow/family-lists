@@ -44,19 +44,28 @@ npm run build   # 类型检查 + 打包
 
 **公网地址：https://www.boringworld.cn** —— 前端页面 + API 同源部署，PWA 可添加到桌面。
 
-架构：
+架构（同域名多项目，路径前缀区分）：
+
+| 路径 | 项目 | 说明 |
+|---|---|---|
+| `/` | 家庭清单 | 静态 `https-proxy\dist\` + `/api` 反代到 8791 |
+| `/onenest/` | OneNest（人车家 App/Web） | 静态 `C:\Users\Administrator\onenest\web\` + `/onenest/api` 反代到 5181 |
+
+HTTPS 服务（`C:\Users\Administrator\family-lists\https-proxy\`）用 greenlock-express，80→443 跳转、Let's Encrypt 自动续期；`server.cjs` 的 `PROJECTS` 数组配置各项目前缀、静态目录与后端端口，反代时剥掉前缀，后端代码无需改动。
 
 | 组件 | 位置 | 说明 |
 |---|---|---|
-| HTTPS 服务 | `C:\Users\Administrator\family-lists\https-proxy\` | greenlock-express，80→443 跳转，Let's Encrypt 自动续期 |
-| 前端静态文件 | `https-proxy\dist\` | `npm run build` 产物，同源提供 |
-| API 网关 | `C:\Users\Administrator\family-lists\gateway\` | 8791，`/api/*` 由 HTTPS 服务反代 |
-| 数据库 | `data\family-lists.db` | 本地 SQLite |
+| HTTPS 服务 | `C:\Users\Administrator\family-lists\https-proxy\` | 多项目路由 + 证书自动续期 |
+| 家庭清单静态 | `https-proxy\dist\` | `npm run build` 产物，同源提供 |
+| 家庭清单 API | `C:\Users\Administrator\family-lists\gateway\` | 8791 |
+| OneNest API | `C:\Users\Administrator\onenest\` | 5181 |
+| 数据库 | 各自 `data\` | 均为本地 SQLite |
 
-- 自启：计划任务 `FamilyListsHTTPS` + `FamilyListsAPI`（均 `ONSTART`，Administrator 身份）
-- 证书配置：`https-proxy/greenlock.d/config.json`，域名 `www.boringworld.cn`
-- 应急命令：`schtasks /Run /TN "FamilyListsHTTPS"` / `schtasks /Run /TN "FamilyListsAPI"`
-- 查看日志：`https-proxy\proxy.log`
+- 自启计划任务：`FamilyListsHTTPS` + `FamilyListsAPI` + `OneNestAPI`（均 `ONSTART`，Administrator 身份）
+- 证书配置：`https-proxy/greenlock.d/config.json`，域名 `www.boringworld.cn`（单证书覆盖所有路径）
+- 应急命令：`schtasks /Run /TN "FamilyListsHTTPS"` / `FamilyListsAPI` / `OneNestAPI`
+- 查看日志：`https-proxy\proxy.log`、`onenest\server.log`
+- 排坑：Windows bat 必须 CRLF 换行，LF 会导致计划任务启动报「语法不正确」
 
 前端 `.env` 的 `VITE_API_BASE` 保持留空（同源 `/api`），仅分域部署时才填完整地址。
 
